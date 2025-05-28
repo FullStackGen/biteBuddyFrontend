@@ -1,0 +1,66 @@
+@import "tailwindcss"; 
+
+@theme {
+  /* fonts & spacing */
+  --font-sans: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --spacing-4: 1rem;
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+
+  /* light mode colors */
+  --color-text: #213547;
+  --color-bg-light: #ffffff;
+  
+  /* dark mode colors */
+  --color-text-dark: rgba(255 255 255 / 0.87);
+  --color-bg-dark: #242424;
+}
+
+/* 3) Tell Tailwind how to apply your “dark:” variants using data-theme="dark" */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));  /* :contentReference[oaicite:1]{index=1} */
+
+/* 4) Base element styles, driven by your CSS variables */
+:root {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: var(--color-text);
+  background-color: var(--color-bg-light);
+  /* font-rendering tweaks */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] {
+  color: var(--color-text-dark);
+  background-color: var(--color-bg-dark);
+}
+
+
+@layer base {
+  a {
+    @apply font-medium text-indigo-500 hover:text-indigo-600;
+  }
+  body {
+    @apply m-0 p-0;
+  }
+  h1 {
+    @apply text-3xl leading-tight;
+  }
+  button {
+    @apply rounded border border-transparent px-6 py-3 text-base font-medium dark:bg-gray-900 transition-colors focus:outline-4 focus:outline-indigo-500 bg-gray-200;
+  }
+  /* dark-mode button overrides */
+  @variants dark {
+    button {
+      @apply bg-gray-100 text-black border-gray-300;
+    }
+  }
+}
+
+/* 6) Any additional utilities you need */
+@layer utilities {
+  /* e.g. custom scrollbar utilities, extra animations, etc. */
+}
