@@ -3,11 +3,9 @@ import darkModeIcon from "./assets/dark-mode.svg"
 import lightModeIcon from "./assets/light-mode.svg"
 import defaultAvatar from "./assets/default-user-avatar.svg";
 
-type Theme = "light" | "dark";
-type Lang = "en";
 
 function App() {
-  const [theme, setTheme] = useState<Theme>(() => {
+  const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark") {
       return saved;
