@@ -31,11 +31,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --neon-start: #ff6ec7;
+  --neon-end:   #ff8c69;
 }
 
 :root[data-theme="dark"] {
   color: var(--color-text-dark);
   background-color: var(--color-bg-dark);
+  --neon-start: #0ff;
+  --neon-end:   #7fffd4;
 }
 
 
@@ -62,5 +66,37 @@
 
 /* 6) Any additional utilities you need */
 @layer utilities {
-  /* e.g. custom scrollbar utilities, extra animations, etc. */
+  @keyframes colorCycle {
+  0%   { color: #ff0080; }   /* Neon pink */
+  50%  { color: #00ffff; }   /* Cyan */
+  100% { color: #ff0080; }
+}
+
+.neon {
+  animation: colorCycle 2.5s ease-in-out infinite alternate;
+}
+
+  /* @keyframes neon {
+    0%, 100% {
+      text-shadow:
+        0 0 4px  var(--neon-start),
+        0 0 8px  var(--neon-start),
+        0 0 16px var(--neon-end),
+        0 0 24px var(--neon-end);
+    }
+    50% {
+      text-shadow:
+        0 0 8px  var(--neon-end),
+        0 0 16px var(--neon-end),
+        0 0 32px var(--neon-start),
+        0 0 48px var(--neon-start);
+    }
+  }
+
+  .neon {
+    /* use the “start” color as the text color,
+       so even before the glow kicks in it’s visible */
+    /* color: var(--neon-start) !important;
+    animation: neon 1.5s ease-in-out infinite alternate;
+  } */ 
 }

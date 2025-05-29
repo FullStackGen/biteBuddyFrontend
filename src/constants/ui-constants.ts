@@ -2,21 +2,25 @@ export const dashboardComponentButtons = [
     {
       id: "home",
       name: "Home",
-      route: "/"
+      route: "/",
+      component: "Home"
     },
     {
       id: "add-restaurant",
       name: "Add new Restaurant",
-      route: "/add-restaurant"
+      route: "/add-restaurant",
+      component: "AddRestaurant"
     },
     {
       id: "orders",
       name: "Orders",
-      route: "/orders"
+      route: "/orders",
+      component: "Orders"
     }, 
     {
       id: "help",
       name: "Help",
-      route: "/help"
+      route: "/help",
+      component: "Help"
     }
 ]
