@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import searchIcon from "../../assets/search.svg"
+import GoogleSignIn from "./GoogleSignin";
 
 const Home = () => {
 
@@ -41,6 +42,10 @@ const Home = () => {
                     <input type="text" className="w-16 h-10"/>
                 </form>
             </section> */}
+
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <GoogleSignIn />
+            </div>
 
         </>
     )
