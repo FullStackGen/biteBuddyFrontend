@@ -1,8 +1,12 @@
 import { useRef, useState } from "react";
 import searchIcon from "../../assets/search.svg"
+import useRestaurantData from "../../hooks/restaurantData";
+import RestaurantsListData from "./RestaurantsData";
 
 const Home = () => {
 
+    const [restaurantList, stateWiseFilteredData] = useRestaurantData();
+    console.log("Data", restaurantList)
     const searchValue = useRef<HTMLInputElement>(null)
     // const searchValue = useRef<string>("")
     // const [searchQuery, setSearchQuery] = useState<string>("");
@@ -36,6 +40,11 @@ const Home = () => {
                 </section>
             </div>
 
+            {!restaurantList || restaurantList.length === 0 || !stateWiseFilteredData || stateWiseFilteredData?.length === 0 ? (
+                <div>Loading…</div>
+            ) : (
+                <RestaurantsListData restData={stateWiseFilteredData}></RestaurantsListData>
+            )}
             {/* <section className="flex items-center p-8 mt-4">
                 <form onSubmit={searchRestaurant}>
                     <input type="text" className="w-16 h-10"/>
