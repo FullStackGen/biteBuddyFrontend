@@ -11,16 +11,16 @@ export const dashboardComponentButtons = [
       route: "/add-restaurant",
       component: "AddRestaurant"
     },
+      {
+      id: "restaurants",
+      name: "Restaurant",
+      route: "/restaurant",
+      component: "RestaurantDetails"
+    },
     {
       id: "orders",
       name: "Orders",
       route: "/orders",
       component: "Orders"
-    }, 
-    {
-      id: "help",
-      name: "Help",
-      route: "/help",
-      component: "Help"
     }
 ]

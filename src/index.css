@@ -64,6 +64,23 @@
   }
 }
 
+/* 1) For WebKit browsers (Chrome, Edge, Safari) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* 2) For Firefox */
+html,
+body {
+  scrollbar-width: none;   /* hides scrollbar but keeps scrolling */
+}
+
+/* 3) For IE/Edge Legacy */
+html,
+body {
+  -ms-overflow-style: none; /* hides scrollbar on IE/Edge 10+ */
+}
 /* 6) Any additional utilities you need */
 @layer utilities {
   @keyframes colorCycle {

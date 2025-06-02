@@ -5,5 +5,9 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+   optimizeDeps: {
+    include: ["@mui/material/useMediaQuery", "@mui/material/Dialog"],
+    // or exclude: ["some‐other‐pkg"]
+  },
   base:"./",
 });

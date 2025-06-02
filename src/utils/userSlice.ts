@@ -13,6 +13,9 @@ const userSlice = createSlice({
     reducers: {
          setUserData: (state,action:{payload:Userstate}) => {
             return {...action.payload};
+         },
+         setUserLocationInfo: (state,action:{payload:{lat:string,long:string}})=> {
+            return {...state,lat:action.payload.lat,long:action.payload.long};
          }
     }
 })

@@ -6,11 +6,13 @@ import NotFound from "./components/features/NotFound"
 import { dashboardComponentButtons } from "./constants/ui-constants"
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
+import RestaurantDetails from "./components/features/RestaurantDetails"
 
 // map the string key → actual React component
 const componentMap: Record<string, React.ComponentType> = {
     Home,
     AddRestaurant,
+    RestaurantDetails,
     Orders,
     Help,
 }
