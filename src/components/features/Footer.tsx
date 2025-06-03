@@ -2,7 +2,7 @@ const Footer = () => {
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
     return (
         <>
-            <section className="grid grid-cols-12 items-center justify-center p-8 shadow-2xl drop-shadow-2xl z-10  outline-2 border-2 rounded-xl">
+            <section className="grid grid-cols-12 items-center justify-center p-8 shadow-2xl drop-shadow-2xl z-10 bg-blue-100 dark:bg-blue-900 rounded-xl">
                 <div className="col-span-6">
                     <div>
                         <h1 className="text-3xl font-bold text-shadow-2xs leading-4">BiteBuddy</h1>

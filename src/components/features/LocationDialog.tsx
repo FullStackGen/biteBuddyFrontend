@@ -26,10 +26,13 @@ export default function LocationDialog() {
     // 2. If user clicks “Yes,” request navigator.geolocation
     const handleYes = () => {
         if (navigator.geolocation) {
+            console.log("Requesting geolocation permission...");
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     console.log("Latitude:", position.coords.latitude);
                     console.log("Longitude:", position.coords.longitude);
+                    sessionStorage.setItem("latitude", position.coords.latitude.toString());
+                    sessionStorage.setItem("longitude", position.coords.longitude.toString());
                     handleClose();
                 },
                 (error) => {
@@ -43,7 +46,7 @@ export default function LocationDialog() {
         }
     };
 
-    useEffect(() => { setOpen(true) }, [])
+    useEffect(() => { if (!sessionStorage.getItem("latitude") && !sessionStorage.getItem("longitude")) { setOpen(true) } }, [])
 
     return (
         <>

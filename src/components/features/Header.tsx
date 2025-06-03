@@ -1,17 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 
 import darkModeIcon from "../../assets/dark-mode.svg"
 import lightModeIcon from "../../assets/light-mode.svg"
 import defaultAvatar from "../../assets/default-user-avatar.svg";
 import searchIcon from "../../assets/search.svg";
 
-import { dashboardComponentButtons } from "../../constants/ui-constants";
+import { dashboardComponentButtons, SignUpFormData } from "../../constants/ui-constants";
 import { Theme, ButtonsData } from "../../types/customTypes";
 import { useLocation, useNavigate } from "react-router";
+import { Dialog, DialogContent, DialogTitle, useMediaQuery, useTheme } from "@mui/material";
 
 const Header = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation()
+    const [open, setOpen] = useState(false);
+    const [loginFormData, setLoginFormData] = useState<any>([]);
+    const [formType, setFormType] = useState<string>("signup");
+    const materialTheme = useTheme();
+    const fullScreen = useMediaQuery(materialTheme.breakpoints.down("md"));
     const buttonsSectionDetails: ButtonsData[] = dashboardComponentButtons;
 
 
@@ -25,6 +31,9 @@ const Header = () => {
             : "light";
     });
 
+    useEffect(() => {
+        setLoginFormData(SignUpFormData);
+    }, [])
 
 
     useEffect(() => {
@@ -41,7 +50,7 @@ const Header = () => {
     }
 
     return (
-        <main className="shadow-lg shadow-gray-300 drop-shadow-2xl border border-b border-cyan-100 z-10">
+        <main className="shadow-lg shadow-gray-300 drop-shadow-2xl border border-b border-cyan-100 bg-blue-100 dark:bg-blue-900  z-10">
             <header className="flex items-center justify-between p-4 m-4">
                 <div>
                     <h1 className="text-3xl font-bold text-shadow-2xs leading-4">BiteBuddy</h1>
@@ -63,7 +72,7 @@ const Header = () => {
 
 
                     <section>
-                        <button className="text-lg font-mono font-medium italic cursor-pointer">
+                        <button onClick={() => setOpen(true)} className="text-lg font-mono font-medium italic cursor-pointer">
                             Login / Sign Up
                         </button>
                     </section>
@@ -109,7 +118,31 @@ const Header = () => {
 
                 </div>
             </header>
-        </main>
+
+            <Dialog
+                fullScreen={fullScreen}
+
+                open={open}
+                onClose={() => setOpen(false)}
+            >
+                <DialogTitle id="login-signup-dialog-title">
+                    Login / Sign Up
+                </DialogTitle>
+                <DialogContent>
+                    {(!loginFormData || loginFormData?.length === 0) ? null : (
+                        loginFormData?.map((item) => (
+                            <section key={item?.id} className="m-2">
+                                <label>{item?.label}</label>
+                                <input type={item?.type} className="w-full border rounded-lg p-4 outline-0 leading-4" />
+
+                            </section>
+                        ))
+                    )}
+                </DialogContent>
+
+            </Dialog>
+        </main >
+
     );
 }
 
