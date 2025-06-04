@@ -265,7 +265,7 @@ const Header: React.FC = () => {
                                         id={id}
                                         fullWidth
                                         inputRef={refs[id]} // <--- important: attaches the ref
-                                        type={type === "password" && !showPassword ? "password" : "text"}
+                                        type={type === "password" && showPassword ? "password" : "text"}
                                         placeholder={placeholder}
                                         error={Boolean(fieldState.error)}
                                         defaultValue={fieldState.value}
