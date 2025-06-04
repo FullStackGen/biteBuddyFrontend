@@ -25,7 +25,7 @@ export const dashboardComponentButtons = [
     }
 ]
 
-export const SignUpFormData = [
+export const SignUpOrLoginFormData = [
   {
     id: "name",
     label: "Name",
@@ -33,13 +33,13 @@ export const SignUpFormData = [
     placeholder: "Enter your name"
   },
   {
-    id: "email",
+    id: "emailId",
     label: "Email",
     type: "email",
     placeholder: "Enter your email"
   },
-   {
-    id: "mobileNumber",
+  {
+    id: "mobile",
     label: "Mobile Number",
     type: "text",
     placeholder: "Enter your mobile number"
@@ -50,20 +50,4 @@ export const SignUpFormData = [
     type: "password",
     placeholder: "Enter your password"
   }
-]
-
-
-export const LoginFormData = [
-  {
-    id: "email",
-    label: "Email",
-    type: "email",
-    placeholder: "Enter your email"
-  },
-  {
-    id: "password",
-    label: "Password",
-    type: "password",
-    placeholder: "Enter your password"
-  }
-]
+];
