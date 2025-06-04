@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 
 import darkModeIcon from "../../assets/dark-mode.svg"
 import lightModeIcon from "../../assets/light-mode.svg"
@@ -8,17 +8,217 @@ import searchIcon from "../../assets/search.svg";
 import { dashboardComponentButtons, SignUpFormData } from "../../constants/ui-constants";
 import { Theme, ButtonsData } from "../../types/customTypes";
 import { useLocation, useNavigate } from "react-router";
-import { Dialog, DialogContent, DialogTitle, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, debounce, Dialog, DialogContent, DialogTitle, FormControl, FormLabel, Icon, IconButton, InputAdornment, InputLabel, OutlinedInput, useMediaQuery, useTheme } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 const Header = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation()
     const [open, setOpen] = useState(false);
     const [loginFormData, setLoginFormData] = useState<any>([]);
-    const [formType, setFormType] = useState<string>("signup");
+    const [formType, setFormType] = useState<string>("Sign Up");
+    const [formData, setFormData] = useState<any>({
+        "name": {
+            "value": "",
+            "error": ""
+        },
+        "emailId": {
+            "value": "",
+            "error": ""
+        },
+        "mobile": {
+            "value": "",
+            "error": ""
+        },
+        "password": {
+            "value": "",
+            "error": ""
+        }
+    })
     const materialTheme = useTheme();
     const fullScreen = useMediaQuery(materialTheme.breakpoints.down("md"));
     const buttonsSectionDetails: ButtonsData[] = dashboardComponentButtons;
+
+
+    const [showPassword, setShowPassword] = useState(true);
+
+    const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+    };
+
+    const handleMouseUpPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+    };
+
+    const changeFormType = (type: string) => {
+        console.log("Changing form type to: ", type);
+        setFormData({
+            "name": {
+                "value": "",
+                "error": ""
+            },
+            "emailId": {
+                "value": "",
+                "error": ""
+            },
+            "mobile": {
+                "value": "",
+                "error": ""
+            },
+            "password": {
+                "value": "",
+                "error": ""
+            }
+        });
+        setFormType(type);
+    };
+
+    const checkError = (id: string, value: any): string => {
+        switch (id) {
+            case "name":
+                if (value.length < 3) {
+                    return "Name must be at least 3 characters long";
+                }
+                break;
+            case "emailId":
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) {
+                    return "Please enter a valid email address";
+                }
+                break;
+            case "mobile":
+                const mobileRegex = /^\d{10}$/; // Assuming a 10-digit mobile number
+                if (!mobileRegex.test(value)) {
+                    return "Please enter a valid 10-digit mobile number";
+                }
+                break;
+            case "password":
+                if (value.length < 6) {
+                    return "Password must be at least 6 characters long";
+                }
+                if (!/[A-Z]/.test(value)) {
+                    return "Password must contain at least one uppercase letter";
+                }
+                if (!/[a-z]/.test(value)) {
+                    return "Password must contain at least one lowercase letter";
+                }
+                if (!/[0-9]/.test(value)) {
+                    return "Password must contain at least one number";
+                }
+                if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+                    return "Password must contain at least one special character";
+                }
+                break;
+            default:
+                return "";
+        }
+        return "";
+    }
+
+    const closeDialog = () => {
+        setOpen(false);
+        setFormType("Sign Up");
+        setFormData({
+            "name": {
+                "value": "",
+                "error": ""
+            },
+            "emailId": {
+                "value": "",
+                "error": ""
+            },
+            "mobile": {
+                "value": "",
+                "error": ""
+            },
+            "password": {
+                "value": "",
+                "error": ""
+            }
+        });
+    }
+
+
+
+
+    const changeFormData = (id: string, value: any) => {
+        const error = checkError(id, value);
+        setFormData({ ...formData, [id]: { value: value, error: error } })
+    }
+
+    //  Create a debounced version of _updateField:
+    //    - lodash.debounce(fn, 500) returns a function that waits 1000ms after the last call
+    //    - useCallback ensures we don’t recreate the debounced function on every render
+    const debouncedUpdateField = useCallback(
+        debounce((id: string, value: string) => {
+            changeFormData(id, value);
+        }, 1000),
+        []
+    );
+
+
+    const submitForm = () => {
+        let updated: any = { ...formData };
+        let hasError = false;
+
+        Object.entries(formData).forEach(([key, field]: any) => {
+            const val = (field.value || "").trim();
+            const existingError = checkError(key, val);
+
+            // If the field is empty → “This field is required”
+            // Else if it fails checkError → that string
+            // Otherwise → no error
+            let newError = "";
+            if (val === "") {
+                newError = "This field is required";
+            } else if (existingError) {
+                newError = existingError;
+            }
+
+            if (newError) {
+                hasError = true;
+            }
+
+            updated[key] = { value: val, error: newError };
+        });
+
+        // 2) Push those “required” or validation errors into state so the UI updates
+        setFormData(updated);
+
+        // 3) If any field has an error, stop here
+        if (hasError) {
+            console.error("Form has errors, cannot submit", updated);
+            return;
+        }
+
+  
+
+
+        console.log("Form submitted successfully with data: ", formData);
+
+        setFormData({
+            "name": {
+                "value": "",
+                "error": ""
+            },
+            "emailId": {
+                "value": "",
+                "error": ""
+            },
+            "mobile": {
+                "value": "",
+                "error": ""
+            },
+            "password": {
+                "value": "",
+                "error": ""
+            }
+        });
+        closeDialog();
+    }
 
 
     const [theme, setTheme] = useState<Theme>(() => {
@@ -120,24 +320,149 @@ const Header = () => {
             </header>
 
             <Dialog
-                fullScreen={fullScreen}
-
+                fullWidth={true}
+                maxWidth="md"
                 open={open}
-                onClose={() => setOpen(false)}
+                onClose={closeDialog}
             >
                 <DialogTitle id="login-signup-dialog-title">
-                    Login / Sign Up
+                    {formType === "Sign Up" ? "Create an Account" : "Login to your Account"}
                 </DialogTitle>
                 <DialogContent>
-                    {(!loginFormData || loginFormData?.length === 0) ? null : (
-                        loginFormData?.map((item) => (
-                            <section key={item?.id} className="m-2">
-                                <label>{item?.label}</label>
-                                <input type={item?.type} className="w-full border rounded-lg p-4 outline-0 leading-4" />
+                    <Box className="py-8 grid grid-cols-12 gap-8" content="section">
+                        {
+                            formType === "Login" ? null : (
+                                <>
+                                    <FormControl className="w-80 block col-span-6 mb-8" sx={{ display: 'block' }} >
+                                        <FormLabel id="name-label">Name</FormLabel>
+                                        {/* <InputLabel id="name-label">Name</InputLabel> */}
+                                        <OutlinedInput
+                                            fullWidth={true}
+                                            id="name-input"
+                                            error={formData?.['name']?.error?.length}
+                                            inputMode="text"
+                                            label="Name"
+                                            multiline={true}
+                                            required={true}
+                                            className="mt-2"
+                                            placeholder="Enter full name"
+                                            notched={false}
+                                            onChange={(e) => debouncedUpdateField("name", e.target.value)}
+                                        >
+                                        </OutlinedInput>
+                                        <span className="text-red-500">
+                                            {formData?.['name']?.error}
+                                        </span>
+                                    </FormControl>
 
-                            </section>
-                        ))
-                    )}
+                                    <FormControl className="w-80 block col-span-6 mb-8" sx={{ display: 'block' }} >
+                                        <FormLabel id="mobile-label">Mobile Number</FormLabel>
+                                        {/* <InputLabel id="name-label">Name</InputLabel> */}
+                                        <OutlinedInput
+                                            fullWidth={true}
+                                            id="mobile-input"
+                                            error={formData?.['mobile']?.error?.length}
+                                            inputMode="text"
+                                            label="MobileNumber"
+                                            multiline={true}
+                                            required={true}
+                                            className="mt-2"
+                                            placeholder="Enter mobile number"
+                                            notched={false}
+                                            onChange={(e) => debouncedUpdateField("mobile", e.target.value)}
+                                        >
+                                        </OutlinedInput>
+                                        <span className="text-red-500">
+                                            {formData?.['mobile']?.error}
+                                        </span>
+                                    </FormControl>
+                                </>
+                            )
+                        }
+
+
+                        <FormControl className="w-80 block col-span-6 mb-8" sx={{ display: 'block' }} >
+                            <FormLabel id="emailId-label">Email ID</FormLabel>
+                            {/* <InputLabel id="emailId-label">Enter Email ID</InputLabel> */}
+                            <OutlinedInput
+                                fullWidth={true}
+                                id="emailId-input"
+                                error={formData?.['emailId']?.error?.length}
+                                inputMode="text"
+                                label="Email ID"
+                                multiline={true}
+                                required={true}
+                                className="mt-2"
+                                placeholder="Enter email ID"
+                                notched={false}
+                                onChange={(e) => debouncedUpdateField("emailId", e.target.value)}
+
+                            >
+                            </OutlinedInput>
+                            <span className="text-red-500">
+                                {formData?.['emailId']?.error}
+                            </span>
+                        </FormControl>
+
+
+                        <FormControl className="w-80 block col-span-6 mb-8" sx={{ display: 'block' }} >
+                            <FormLabel id="pass-label ">Password</FormLabel>
+                            {/* <InputLabel id="name-label">Name</InputLabel> */}
+                            <OutlinedInput
+                                fullWidth={true}
+                                id="pass-input"
+                                error={formData?.['password']?.error?.length}
+                                label="Password"
+                                required={true}
+                                type={showPassword ? 'password' : 'text'}
+                                className="mt-2"
+                                placeholder="Enter password"
+                                notched={false}
+                                onChange={(e) => debouncedUpdateField("password", e.target.value)}
+                                endAdornment={
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label={
+                                                showPassword ? 'hide the password' : 'display the password'
+                                            }
+                                            onClick={handleClickShowPassword}
+                                            onMouseDown={handleMouseDownPassword}
+                                            onMouseUp={handleMouseUpPassword}
+                                        >
+                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                }
+                            >
+                            </OutlinedInput>
+                            <span className="text-red-500">
+                                {formData?.['password']?.error}
+                            </span>
+                        </FormControl>
+
+                    </Box>
+
+                    <section className="flex flex-col items-center justify-center">
+                        <div>
+                            <Button onClick={submitForm} fullWidth={false} variant="contained" className="mt-4 p-8">
+                                {formType}
+                            </Button>
+                        </div>
+
+                        <div>
+                            {formType === "Sign Up" ?
+                                (<>Already have an account ?
+                                    <Button onClick={() => changeFormType('Login')} fullWidth={false} variant="text" className="">
+                                        Login
+                                    </Button></>) :
+                                (<>Need to create a new Account ?
+                                    <Button onClick={() => changeFormType('Sign Up')} fullWidth={false} variant="text" className="">
+                                        Sign Up
+                                    </Button></>)}
+                        </div>
+                    </section>
+
+
                 </DialogContent>
 
             </Dialog>
