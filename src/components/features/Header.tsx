@@ -25,17 +25,15 @@ import darkModeIcon from "../../assets/dark-mode.svg";
 import lightModeIcon from "../../assets/light-mode.svg";
 import defaultAvatar from "../../assets/default-user-avatar.svg";
 import { dashboardComponentButtons, SignUpOrLoginFormData } from "../../constants/ui-constants";
-import { Theme, ButtonsData } from "../../types/customTypes";
+import { Theme } from "../../types/customTypes";
+import { login, signUp } from "../../services/services";
+
 
 const Header: React.FC = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
-
-    // Dialog open + formType ("Sign Up" vs "Login")
     const [open, setOpen] = useState(false);
     const [formType, setFormType] = useState<"Sign Up" | "Login">("Sign Up");
-
-    // formData only holds latest error and (lagging) value
     const [formData, setFormData] = useState<{
         [key: string]: { value: string; error: string };
     }>({
@@ -45,7 +43,7 @@ const Header: React.FC = () => {
         password: { value: "", error: "" }
     });
 
-    // Refs for each input, so on submit we read the true value instantly
+
     const refs: {
         [key: string]: React.RefObject<HTMLInputElement | null>;
     } = {
@@ -55,7 +53,6 @@ const Header: React.FC = () => {
         password: useRef<HTMLInputElement>(null)
     };
 
-    // Theme / responsiveness
     const materialTheme = useTheme();
     const fullScreen = useMediaQuery(materialTheme.breakpoints.down("md"));
     const [theme, setTheme] = useState<Theme>(() => {
@@ -69,12 +66,11 @@ const Header: React.FC = () => {
     }, [theme]);
     const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
-    // Show/hide password toggle
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((s) => !s);
     const handleMouseDownPassword = (e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault();
 
-    // Basic per‐field validation
+
     const checkError = (id: string, rawValue: string): string => {
         const val = rawValue.trim();
         switch (id) {
@@ -114,7 +110,7 @@ const Header: React.FC = () => {
         []
     );
 
-    // 2) If user toggles form type, reset state + clear refs
+
     const changeFormType = (type: "Sign Up" | "Login") => {
         setFormType(type);
         setFormData({
@@ -123,42 +119,39 @@ const Header: React.FC = () => {
             mobile: { value: "", error: "" },
             password: { value: "", error: "" }
         });
-        // Clear the actual DOM inputs immediately:
+
         Object.values(refs).forEach((r) => {
             if (r.current) r.current.value = "";
         });
     };
 
-    // 3) Close dialog + reset everything
+
     const closeDialog = () => {
         setOpen(false);
         changeFormType("Sign Up");
     };
 
-    // 4) Handle “Submit”—flush any pending debounce, then read from refs
-    const submitForm = () => {
-        // Immediately run any pending validations for all four fields:
+
+
+    const submitForm = async () => {
+
         changeFormDataDebounced.flush(); // this forces the last debounce call to fire now
 
-        // Decide which keys we actually need:
+
         const requiredFields = formType === "Sign Up"
             ? ["name", "emailId", "mobile", "password"]
             : ["emailId", "password"];
 
-        // Build an updated object that sets “required” or “validation” errors
         let updated = { ...formData };
         let hasError = false;
 
         requiredFields.forEach((key) => {
             const rawFromRef = refs[key].current?.value ?? "";
             const trimmed = rawFromRef.trim();
-
-            // 1) Check “required”
             let newErr = "";
             if (trimmed === "") {
                 newErr = "This field is required";
             } else {
-                // 2) Check deeper validation
                 const valErr = checkError(key, rawFromRef);
                 if (valErr) newErr = valErr;
             }
@@ -166,22 +159,43 @@ const Header: React.FC = () => {
             if (newErr) hasError = true;
             updated[key] = { value: trimmed, error: newErr };
         });
-
-        // Push the error states into formData so UI updates show red under each field
         setFormData(updated);
         if (hasError) {
             console.error("Form has errors, cannot submit", updated);
             return;
         }
 
-        // All validations pass—gather payload and “submit”
-        const payload: any = {};
+        let payload: any = {};
         requiredFields.forEach((k) => {
-            payload[k] = updated[k].value;
+            const payloadKey: any = SignUpOrLoginFormData.find((data: any) => data.id === k);
+            payload[payloadKey?.apiKey] = updated[k].value;
         });
+
+        payload = {
+            ...payload,
+            role: 'ROLE_ADMIN'
+        }
+
         console.log("Form submitted successfully:", formType, payload);
 
-        closeDialog();
+
+        try {
+            let apiResponse;
+            if (formType !== "Login") {
+                apiResponse = await signUp(payload);
+            } else {
+                apiResponse = await login(payload.email, payload.password);
+            }
+
+            if (apiResponse) {
+                console.log("API Response:", apiResponse.data);
+            }
+            closeDialog();
+            console.log("API Response:", apiResponse);
+        } catch (error) {
+            console.log("error", error);
+        }
+        closeDialog()
     };
 
     return (
@@ -233,19 +247,25 @@ const Header: React.FC = () => {
                 </div>
             </header>
 
+
+
             <Dialog
                 open={open}
                 fullWidth
                 maxWidth="md"
                 fullScreen={fullScreen}
                 onClose={closeDialog}
+                sx={{
+                    "& .MuiPaper-root": {
+                        borderRadius: "1rem", // equivalent to tailwind’s rounded-2xl
+                    },
+                }}
             >
-                <DialogTitle>
-                    {formType === "Sign Up" ? "Create an Account" : "Login to your Account"}
-                </DialogTitle>
-                <DialogContent>
-                    <Box className="py-8 grid grid-cols-12 gap-8" component="section">
-
+                <DialogContent className="flex items-center justify-center flex-col gap-8">
+                    <div className="text-center pt-12 font-bold text-2xl text-shadow-2xs">
+                        {formType === "Sign Up" ? "Create an Account" : "Login to your Account"}
+                    </div>
+                    <Box className="grid grid-cols-12 gap-12" component="section">
                         {SignUpOrLoginFormData.filter((fd) => {
                             return formType === "Login"
                                 ? fd.id === "emailId" || fd.id === "password"
@@ -264,26 +284,30 @@ const Header: React.FC = () => {
                                     <OutlinedInput
                                         id={id}
                                         fullWidth
-                                        inputRef={refs[id]} // <--- important: attaches the ref
-                                        type={type === "password" && showPassword ? "password" : "text"}
+                                        inputRef={refs[id]}
+                                        type={type === "password" && showPassword ? "text" : type}
                                         placeholder={placeholder}
                                         error={Boolean(fieldState.error)}
                                         defaultValue={fieldState.value}
                                         className="mt-2"
+                                        sx={{ borderRadius: "0.8rem", outline: 0 }} // equivalent to tailwind’s rounded-2xl
                                         onChange={(e) => changeFormDataDebounced(id, e.target.value)}
                                         {...(type === "password"
                                             ? {
                                                 endAdornment: (
                                                     <InputAdornment position="end">
                                                         <IconButton
-                                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                                            aria-label={
+                                                                !showPassword ? "Hide password" : "Show password"
+                                                            }
                                                             onClick={handleClickShowPassword}
                                                             onMouseDown={handleMouseDownPassword}
+                                                            className="rounded-2xl" // ← if you want the icon button itself to be rounded
                                                         >
-                                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                            {!showPassword ? <VisibilityOff /> : <Visibility />}
                                                         </IconButton>
                                                     </InputAdornment>
-                                                )
+                                                ),
                                             }
                                             : {})}
                                     />
@@ -297,7 +321,12 @@ const Header: React.FC = () => {
 
                     <section className="flex flex-col items-center justify-center">
                         <div>
-                            <Button onClick={submitForm} variant="contained" className="mt-4 p-8">
+                            <Button
+                                sx={{ borderRadius: "0.8rem" }} // equivalent to tailwind’s rounded-2xl
+                                onClick={submitForm}
+                                variant="contained"
+                                className="mt-4 p-8 z-50 shadow-2xl drop-shadow-2xl shadow-cyan-50 border rounded-2xl"
+                            >
                                 {formType}
                             </Button>
                         </div>
@@ -321,6 +350,8 @@ const Header: React.FC = () => {
                     </section>
                 </DialogContent>
             </Dialog>
+
+
         </main>
     );
 };

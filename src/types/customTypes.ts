@@ -7,3 +7,12 @@ export interface ButtonsData {
   component: string;
   icon?: string; // Optional icon property
 }
+
+export interface SignUpPayload {
+    name:string,
+    email:string,
+    phoneNumber:string,
+    password:"{{userPassword}}",
+    addresses?:any[],
+    role:string
+}
