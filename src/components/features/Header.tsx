@@ -1,37 +1,51 @@
-// Header.tsx (TypeScript + React)
+// src/components/features/Header.tsx
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, MouseEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
     Box,
     Button,
     Dialog,
     DialogContent,
-    DialogTitle,
     FormControl,
     FormLabel,
     IconButton,
     InputAdornment,
     OutlinedInput,
+    Menu,
+    MenuItem,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Divider,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useSelector } from "react-redux";
 
 import debounce from "lodash/debounce";
 
 import darkModeIcon from "../../assets/dark-mode.svg";
 import lightModeIcon from "../../assets/light-mode.svg";
 import defaultAvatar from "../../assets/default-user-avatar.svg";
-import { dashboardComponentButtons, SignUpOrLoginFormData } from "../../constants/ui-constants";
+import {
+    dashboardComponentButtons,
+    SignUpOrLoginFormData,
+} from "../../constants/ui-constants";
 import { Theme } from "../../types/customTypes";
 import { login, signUp } from "../../services/services";
-
 
 const Header: React.FC = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const userData = useSelector((state: any) => {
+        console.log("state", state);
+        return state.users
+    });
+    console.log("userData", userData);
+
+    // --- Dialog + Form State ---
     const [open, setOpen] = useState(false);
     const [formType, setFormType] = useState<"Sign Up" | "Login">("Sign Up");
     const [formData, setFormData] = useState<{
@@ -40,55 +54,79 @@ const Header: React.FC = () => {
         name: { value: "", error: "" },
         emailId: { value: "", error: "" },
         mobile: { value: "", error: "" },
-        password: { value: "", error: "" }
+        password: { value: "", error: "" },
     });
 
+    // --- Avatar Menu State ---
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const menuOpen = Boolean(anchorEl);
+    const handleMenuOpen = (e: MouseEvent<HTMLElement>) => {
+        setAnchorEl(e.currentTarget);
+    };
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
+    // Refs for form fields
     const refs: {
-        [key: string]: React.RefObject<HTMLInputElement | null>;
+        [key: string]: React.RefObject<HTMLInputElement>;
     } = {
         name: useRef<HTMLInputElement>(null),
         emailId: useRef<HTMLInputElement>(null),
         mobile: useRef<HTMLInputElement>(null),
-        password: useRef<HTMLInputElement>(null)
+        password: useRef<HTMLInputElement>(null),
     };
 
+    // Theme / responsiveness
     const materialTheme = useTheme();
     const fullScreen = useMediaQuery(materialTheme.breakpoints.down("md"));
     const [theme, setTheme] = useState<Theme>(() => {
         const saved = localStorage.getItem("theme");
         if (saved === "light" || saved === "dark") return saved;
-        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
     });
     useEffect(() => {
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem("theme", theme);
     }, [theme]);
-    const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    const toggleTheme = () =>
+        setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
+    // Show/hide password
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((s) => !s);
-    const handleMouseDownPassword = (e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault();
+    const handleMouseDownPassword = (
+        e: React.MouseEvent<HTMLButtonElement>
+    ) => e.preventDefault();
 
-
+    // Per‐field validation
     const checkError = (id: string, rawValue: string): string => {
         const val = rawValue.trim();
         switch (id) {
             case "name":
-                if (val.length < 3) return "Name must be at least 3 characters long";
+                if (val.length < 3)
+                    return "Name must be at least 3 characters long";
                 return "";
             case "emailId":
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return "Please enter a valid email address";
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val))
+                    return "Please enter a valid email address";
                 return "";
             case "mobile":
-                if (!/^\d{10}$/.test(val)) return "Please enter a valid 10-digit mobile number";
+                if (!/^\d{10}$/.test(val))
+                    return "Please enter a valid 10-digit mobile number";
                 return "";
             case "password":
-                if (rawValue.length < 6) return "Password must be at least 6 characters long";
-                if (!/[A-Z]/.test(rawValue)) return "Password must contain at least one uppercase letter";
-                if (!/[a-z]/.test(rawValue)) return "Password must contain at least one lowercase letter";
-                if (!/[0-9]/.test(rawValue)) return "Password must contain at least one number";
-                if (!/[!@#$%^&*(),.?\":{}|<>]/.test(rawValue))
+                if (rawValue.length < 6)
+                    return "Password must be at least 6 characters long";
+                if (!/[A-Z]/.test(rawValue))
+                    return "Password must contain at least one uppercase letter";
+                if (!/[a-z]/.test(rawValue))
+                    return "Password must contain at least one lowercase letter";
+                if (!/[0-9]/.test(rawValue))
+                    return "Password must contain at least one number";
+                if (!/[!@#$%^&*(),.?":{}|<>]/.test(rawValue))
                     return "Password must contain at least one special character";
                 return "";
             default:
@@ -96,55 +134,49 @@ const Header: React.FC = () => {
         }
     };
 
-    // 1) Immediate setter to update formData.value + formData.error, debounced
-    //    This runs 1000ms after user stops typing in that field.
-    //    In the meantime, refs hold the "current" input value.
+    // Debounced formData setter
     const changeFormDataDebounced = useCallback(
         debounce((id: string, rawValue: string) => {
             const errMsg = checkError(id, rawValue);
             setFormData((prev) => ({
                 ...prev,
-                [id]: { value: rawValue, error: errMsg }
+                [id]: { value: rawValue, error: errMsg },
             }));
         }, 1000),
         []
     );
 
-
+    // Switch between Sign Up / Login
     const changeFormType = (type: "Sign Up" | "Login") => {
         setFormType(type);
         setFormData({
             name: { value: "", error: "" },
             emailId: { value: "", error: "" },
             mobile: { value: "", error: "" },
-            password: { value: "", error: "" }
+            password: { value: "", error: "" },
         });
-
         Object.values(refs).forEach((r) => {
             if (r.current) r.current.value = "";
         });
     };
 
-
+    // Close dialog
     const closeDialog = () => {
         setOpen(false);
         changeFormType("Sign Up");
     };
 
-
-
+    // Submit handler
     const submitForm = async () => {
+        changeFormDataDebounced.flush();
 
-        changeFormDataDebounced.flush(); // this forces the last debounce call to fire now
-
-
-        const requiredFields = formType === "Sign Up"
-            ? ["name", "emailId", "mobile", "password"]
-            : ["emailId", "password"];
+        const requiredFields =
+            formType === "Sign Up"
+                ? ["name", "emailId", "mobile", "password"]
+                : ["emailId", "password"];
 
         let updated = { ...formData };
         let hasError = false;
-
         requiredFields.forEach((key) => {
             const rawFromRef = refs[key].current?.value ?? "";
             const trimmed = rawFromRef.trim();
@@ -155,7 +187,6 @@ const Header: React.FC = () => {
                 const valErr = checkError(key, rawFromRef);
                 if (valErr) newErr = valErr;
             }
-
             if (newErr) hasError = true;
             updated[key] = { value: trimmed, error: newErr };
         });
@@ -167,17 +198,17 @@ const Header: React.FC = () => {
 
         let payload: any = {};
         requiredFields.forEach((k) => {
-            const payloadKey: any = SignUpOrLoginFormData.find((data: any) => data.id === k);
+            const payloadKey: any = SignUpOrLoginFormData.find(
+                (data: any) => data.id === k
+            );
             payload[payloadKey?.apiKey] = updated[k].value;
         });
-
         payload = {
             ...payload,
-            role: 'ROLE_ADMIN'
-        }
+            role: "ROLE_ADMIN",
+        };
 
         console.log("Form submitted successfully:", formType, payload);
-
 
         try {
             let apiResponse;
@@ -186,23 +217,23 @@ const Header: React.FC = () => {
             } else {
                 apiResponse = await login(payload.email, payload.password);
             }
-
             if (apiResponse) {
                 console.log("API Response:", apiResponse.data);
             }
             closeDialog();
-            console.log("API Response:", apiResponse);
         } catch (error) {
             console.log("error", error);
         }
-        closeDialog()
+        closeDialog();
     };
 
     return (
         <main className="shadow-lg shadow-gray-300 drop-shadow-2xl border border-b border-cyan-100 bg-blue-100 dark:bg-blue-900 z-10">
             <header className="flex items-center justify-between p-4 m-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-shadow-2xs leading-4">BiteBuddy</h1>
+                    <h1 className="text-3xl font-bold text-shadow-2xs leading-4">
+                        BiteBuddy
+                    </h1>
                 </div>
                 <div className="flex justify-between items-center gap-2 space-x-4">
                     {dashboardComponentButtons.map(({ id, name, route }) => {
@@ -212,13 +243,18 @@ const Header: React.FC = () => {
                                 <button
                                     onClick={() => navigate(route)}
                                     className={`text-lg font-mono font-medium italic cursor-pointer 
-                    ${isActive ? "bg-blue-600 text-white" : "bg-transparent hover:bg-blue-100"}`}
+                    ${isActive
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-transparent hover:bg-blue-100"
+                                        }`}
                                 >
                                     {name}
                                 </button>
                             </section>
                         );
                     })}
+
+                    {/* Login / Sign Up button */}
                     <section>
                         <button
                             onClick={() => setOpen(true)}
@@ -227,9 +263,20 @@ const Header: React.FC = () => {
                             Login / Sign Up
                         </button>
                     </section>
-                    <section className="border border-transparent p-3 rounded-full dark:shadow-sm shadow-md shadow-amber-300 bg-amber-200 transition-all transform hover:scale-120 cursor-pointer ease-snappy duration-300">
-                        <img className="w-5 h-5" alt="User-Avatar" src={defaultAvatar} loading="lazy" />
+
+                    {/* Avatar icon opens menu */}
+                    <section>
+                        <IconButton onClick={handleMenuOpen} size="large">
+                            <img
+                                className="w-5 h-5"
+                                alt="User-Avatar"
+                                src={defaultAvatar}
+                                loading="lazy"
+                            />
+                        </IconButton>
                     </section>
+
+                    {/* Theme toggle */}
                     <section>
                         <button
                             aria-label="Toggle theme"
@@ -247,8 +294,7 @@ const Header: React.FC = () => {
                 </div>
             </header>
 
-
-
+            {/* Sign Up / Login Dialog */}
             <Dialog
                 open={open}
                 fullWidth
@@ -257,13 +303,15 @@ const Header: React.FC = () => {
                 onClose={closeDialog}
                 sx={{
                     "& .MuiPaper-root": {
-                        borderRadius: "1rem", // equivalent to tailwind’s rounded-2xl
+                        borderRadius: "1rem", // rounded corners
                     },
                 }}
             >
                 <DialogContent className="flex items-center justify-center flex-col gap-8">
                     <div className="text-center pt-12 font-bold text-2xl text-shadow-2xs">
-                        {formType === "Sign Up" ? "Create an Account" : "Login to your Account"}
+                        {formType === "Sign Up"
+                            ? "Create an Account"
+                            : "Login to your Account"}
                     </div>
                     <Box className="grid grid-cols-12 gap-12" component="section">
                         {SignUpOrLoginFormData.filter((fd) => {
@@ -272,7 +320,10 @@ const Header: React.FC = () => {
                                 : true;
                         }).map((fd) => {
                             const { id, label, type, placeholder } = fd;
-                            const fieldState = formData[id] || { value: "", error: "" };
+                            const fieldState = formData[id] || {
+                                value: "",
+                                error: "",
+                            };
 
                             return (
                                 <FormControl
@@ -285,26 +336,38 @@ const Header: React.FC = () => {
                                         id={id}
                                         fullWidth
                                         inputRef={refs[id]}
-                                        type={type === "password" && showPassword ? "text" : type}
+                                        type={
+                                            type === "password" && showPassword
+                                                ? "text"
+                                                : type
+                                        }
                                         placeholder={placeholder}
                                         error={Boolean(fieldState.error)}
                                         defaultValue={fieldState.value}
                                         className="mt-2"
-                                        sx={{ borderRadius: "0.8rem", outline: 0 }} // equivalent to tailwind’s rounded-2xl
-                                        onChange={(e) => changeFormDataDebounced(id, e.target.value)}
+                                        sx={{ borderRadius: "0.8rem", outline: 0 }}
+                                        onChange={(e) =>
+                                            changeFormDataDebounced(id, e.target.value)
+                                        }
                                         {...(type === "password"
                                             ? {
                                                 endAdornment: (
                                                     <InputAdornment position="end">
                                                         <IconButton
                                                             aria-label={
-                                                                !showPassword ? "Hide password" : "Show password"
+                                                                showPassword
+                                                                    ? "Hide password"
+                                                                    : "Show password"
                                                             }
                                                             onClick={handleClickShowPassword}
                                                             onMouseDown={handleMouseDownPassword}
-                                                            className="rounded-2xl" // ← if you want the icon button itself to be rounded
+                                                            className="rounded-2xl"
                                                         >
-                                                            {!showPassword ? <VisibilityOff /> : <Visibility />}
+                                                            {!showPassword ? (
+                                                                <VisibilityOff />
+                                                            ) : (
+                                                                <Visibility />
+                                                            )}
                                                         </IconButton>
                                                     </InputAdornment>
                                                 ),
@@ -312,7 +375,9 @@ const Header: React.FC = () => {
                                             : {})}
                                     />
                                     {fieldState.error && (
-                                        <span className="text-red-500">{fieldState.error}</span>
+                                        <span className="text-red-500">
+                                            {fieldState.error}
+                                        </span>
                                     )}
                                 </FormControl>
                             );
@@ -322,7 +387,7 @@ const Header: React.FC = () => {
                     <section className="flex flex-col items-center justify-center">
                         <div>
                             <Button
-                                sx={{ borderRadius: "0.8rem" }} // equivalent to tailwind’s rounded-2xl
+                                sx={{ borderRadius: "0.8rem" }}
                                 onClick={submitForm}
                                 variant="contained"
                                 className="mt-4 p-8 z-50 shadow-2xl drop-shadow-2xl shadow-cyan-50 border rounded-2xl"
@@ -334,24 +399,51 @@ const Header: React.FC = () => {
                             {formType === "Sign Up" ? (
                                 <>
                                     Already have an account?{" "}
-                                    <Button onClick={() => changeFormType("Login")} variant="text">
+                                    <Button
+                                        onClick={() => changeFormType("Login")}
+                                        variant="text"
+                                    >
                                         Login
                                     </Button>
                                 </>
                             ) : (
                                 <>
                                     Need to create a new account?{" "}
-                                    <Button onClick={() => changeFormType("Sign Up")} variant="text">
+                                    <Button
+                                        onClick={() => changeFormType("Sign Up")}
+                                        variant="text"
+                                    >
                                         Sign Up
                                     </Button>
+                                    <Divider>OR</Divider>
                                 </>
                             )}
                         </div>
+
+
                     </section>
                 </DialogContent>
             </Dialog>
 
-
+            {/* Avatar dropdown menu */}
+            <Menu
+                id="basic-menu"
+                anchorEl={anchorEl}
+                open={menuOpen}
+                onClose={handleMenuClose}
+                hideBackdrop={true}
+                closeAfterTransition
+                slotProps={{
+                    list: {
+                        "aria-labelledby": "basic-button",
+                        security: "true",
+                        className: "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100",
+                    },
+                }}
+            >
+                <MenuItem onClick={handleMenuClose}><SettingsIcon /> {"  "} Settings</MenuItem>
+                <MenuItem onClick={handleMenuClose}><LogoutIcon />{"  "} Logout</MenuItem>
+            </Menu>
         </main>
     );
 };
