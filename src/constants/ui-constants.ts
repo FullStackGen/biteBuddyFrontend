@@ -26,32 +26,49 @@ export const dashboardComponentButtons = [
 ]
 
 export const SignUpOrLoginFormData = [
+    {
+    id: "role",
+    label: "User Role",
+    type: "select",
+    options: [
+      { label: "Customer", value: "ROLE_CUSTOMER" },
+      { label: "Admin", value: "ROLE_ADMIN" },
+    ],
+    placeholder: "",
+    apiKey: "role",
+    showIn: ["Sign Up"]
+  },
   {
     id: "name",
     label: "Name",
     type: "text",
     placeholder: "Enter your name",
-    apiKey: "name"
+    apiKey: "name",
+    showIn: ["Sign Up"]
   },
   {
     id: "emailId",
     label: "Email",
     type: "email",
     placeholder: "Enter your email",
-    apiKey: "email"
+    apiKey: "email",
+    showIn: ["Sign Up", "Login"]
   },
   {
     id: "mobile",
     label: "Mobile Number",
     type: "text",
     placeholder: "Enter your mobile number",
-    apiKey: "phoneNumber"
+    apiKey: "phoneNumber",
+    showIn: ["Sign Up"]
   },
   {
     id: "password",
     label: "Password",
     type: "password",
     placeholder: "Enter your password",
-    apiKey: "password"
+    apiKey: "password",
+    showIn: ["Sign Up", "Login"]
   }
 ];
+

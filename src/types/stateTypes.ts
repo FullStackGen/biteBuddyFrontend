@@ -11,7 +11,7 @@ export interface OrdersState {
 }
 
 export interface Userstate {
-    userDetails: UserDetails | null;
+    userDetails: any;
     isAuthenticated: boolean;
 }
 

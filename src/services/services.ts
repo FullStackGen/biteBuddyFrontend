@@ -80,4 +80,12 @@ export function login(email: string, password: string) {
   return apiClient.post(API_ENDPONTS.LOGIN, { email, password });
 }
 
+export function fetchUserData(apiData:any) {
+  return apiClient.get(`${API_ENDPONTS.FETCH_USER_DATA}/${apiData.userId}`, 
+    {
+    headers: {  authorization: `${apiData.token}` }
+  }
+);
+}
+
 // …any other endpoints…

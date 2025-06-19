@@ -12,6 +12,7 @@ import {
     IconButton,
     InputAdornment,
     OutlinedInput,
+    Select,
     Menu,
     MenuItem,
     useMediaQuery,
@@ -22,7 +23,8 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setUserData } from "../../utils/userSlice";
 
 import debounce from "lodash/debounce";
 
@@ -34,15 +36,16 @@ import {
     SignUpOrLoginFormData,
 } from "../../constants/ui-constants";
 import { Theme } from "../../types/customTypes";
-import { login, signUp } from "../../services/services";
+import { fetchUserData, login, signUp } from "../../services/services";
 
 const Header: React.FC = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const userData = useSelector((state: any) => {
-        console.log("state", state);
+        console.log("state", state.users);
         return state.users
     });
+    const userDataDispatcher = useDispatch();
     console.log("userData", userData);
 
     // --- Dialog + Form State ---
@@ -51,6 +54,7 @@ const Header: React.FC = () => {
     const [formData, setFormData] = useState<{
         [key: string]: { value: string; error: string };
     }>({
+        role: { value: "ROLE_CUSTOMER", error: "" },
         name: { value: "", error: "" },
         emailId: { value: "", error: "" },
         mobile: { value: "", error: "" },
@@ -71,6 +75,7 @@ const Header: React.FC = () => {
     const refs: {
         [key: string]: React.RefObject<HTMLInputElement>;
     } = {
+        role: useRef<HTMLInputElement>(null),
         name: useRef<HTMLInputElement>(null),
         emailId: useRef<HTMLInputElement>(null),
         mobile: useRef<HTMLInputElement>(null),
@@ -150,6 +155,7 @@ const Header: React.FC = () => {
     const changeFormType = (type: "Sign Up" | "Login") => {
         setFormType(type);
         setFormData({
+            role: { value: "ROLE_CUSTOMER", error: "" },
             name: { value: "", error: "" },
             emailId: { value: "", error: "" },
             mobile: { value: "", error: "" },
@@ -172,13 +178,13 @@ const Header: React.FC = () => {
 
         const requiredFields =
             formType === "Sign Up"
-                ? ["name", "emailId", "mobile", "password"]
+                ? ["role", "name", "emailId", "mobile", "password"]
                 : ["emailId", "password"];
 
         let updated = { ...formData };
         let hasError = false;
         requiredFields.forEach((key) => {
-            const rawFromRef = refs[key].current?.value ?? "";
+            const rawFromRef = refs[key]?.current?.value ?? "";
             const trimmed = rawFromRef.trim();
             let newErr = "";
             if (trimmed === "") {
@@ -203,10 +209,10 @@ const Header: React.FC = () => {
             );
             payload[payloadKey?.apiKey] = updated[k].value;
         });
-        payload = {
-            ...payload,
-            role: "ROLE_ADMIN",
-        };
+        // payload = {
+        //     ...payload,
+        //     role: formData?.role,
+        // };
 
         console.log("Form submitted successfully:", formType, payload);
 
@@ -216,6 +222,12 @@ const Header: React.FC = () => {
                 apiResponse = await signUp(payload);
             } else {
                 apiResponse = await login(payload.email, payload.password);
+                if (apiResponse) {
+                    userDataDispatcher(setUserData({ userDetails: apiResponse.data, isAuthenticated: true }));
+                }
+                let userDetails = await fetchUserData(apiResponse.data);
+                console.log("userDetails", userDetails);
+
             }
             if (apiResponse) {
                 console.log("API Response:", apiResponse.data);
@@ -255,26 +267,39 @@ const Header: React.FC = () => {
                     })}
 
                     {/* Login / Sign Up button */}
-                    <section>
+                    {/* <section>
                         <button
                             onClick={() => setOpen(true)}
                             className="text-lg font-mono font-medium italic cursor-pointer"
                         >
                             Login / Sign Up
                         </button>
-                    </section>
+                    </section> */}
 
                     {/* Avatar icon opens menu */}
-                    <section>
-                        <IconButton onClick={handleMenuOpen} size="large">
-                            <img
-                                className="w-5 h-5"
-                                alt="User-Avatar"
-                                src={defaultAvatar}
-                                loading="lazy"
-                            />
-                        </IconButton>
-                    </section>
+                    {
+                        !userData?.isAuthenticated ? (
+                            <section>
+                                <button
+                                    onClick={() => setOpen(true)}
+                                    className="text-lg font-mono font-medium italic cursor-pointer"
+                                >
+                                    Login / Sign Up
+                                </button>
+                            </section>
+                        ) : (
+                            <section>
+                                <IconButton onClick={handleMenuOpen} size="large">
+                                    <img
+                                        className="w-5 h-5"
+                                        alt="User-Avatar"
+                                        src={defaultAvatar}
+                                        loading="lazy"
+                                    />
+                                </IconButton>
+                            </section>
+                        )
+                    }
 
                     {/* Theme toggle */}
                     <section>
@@ -308,81 +333,77 @@ const Header: React.FC = () => {
                 }}
             >
                 <DialogContent className="flex items-center justify-center flex-col gap-8">
-                    <div className="text-center pt-12 font-bold text-2xl text-shadow-2xs">
+                    <div className="text-center pt-4 font-bold text-2xl text-shadow-2xs">
                         {formType === "Sign Up"
                             ? "Create an Account"
                             : "Login to your Account"}
                     </div>
-                    <Box className="grid grid-cols-12 gap-12" component="section">
-                        {SignUpOrLoginFormData.filter((fd) => {
-                            return formType === "Login"
-                                ? fd.id === "emailId" || fd.id === "password"
-                                : true;
-                        }).map((fd) => {
-                            const { id, label, type, placeholder } = fd;
-                            const fieldState = formData[id] || {
-                                value: "",
-                                error: "",
-                            };
+
+                    <Box className="grid grid-cols-12 gap-x-12 gap-y-6" component="section">
+                        {SignUpOrLoginFormData.filter((fd) => fd.showIn.includes(formType)).map((fd) => {
+                            const { id, label, type, placeholder, options = [] } = fd;
+                            const fieldState = formData[id] || { value: "", error: "" };
 
                             return (
                                 <FormControl
                                     key={id}
-                                    className="w-80 block col-span-6 mb-8"
+                                    className="w-80 block col-span-6"
                                     sx={{ display: "block" }}
                                 >
                                     <FormLabel htmlFor={id}>{label}</FormLabel>
-                                    <OutlinedInput
-                                        id={id}
-                                        fullWidth
-                                        inputRef={refs[id]}
-                                        type={
-                                            type === "password" && showPassword
-                                                ? "text"
-                                                : type
-                                        }
-                                        placeholder={placeholder}
-                                        error={Boolean(fieldState.error)}
-                                        defaultValue={fieldState.value}
-                                        className="mt-2"
-                                        sx={{ borderRadius: "0.8rem", outline: 0 }}
-                                        onChange={(e) =>
-                                            changeFormDataDebounced(id, e.target.value)
-                                        }
-                                        {...(type === "password"
-                                            ? {
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <IconButton
-                                                            aria-label={
-                                                                showPassword
-                                                                    ? "Hide password"
-                                                                    : "Show password"
-                                                            }
-                                                            onClick={handleClickShowPassword}
-                                                            onMouseDown={handleMouseDownPassword}
-                                                            className="rounded-2xl"
-                                                        >
-                                                            {!showPassword ? (
-                                                                <VisibilityOff />
-                                                            ) : (
-                                                                <Visibility />
-                                                            )}
-                                                        </IconButton>
-                                                    </InputAdornment>
-                                                ),
-                                            }
-                                            : {})}
-                                    />
+
+                                    {type === "select" ? (
+                                        <Select
+                                            id={id}
+                                            inputRef={refs[id]}
+                                            defaultValue={fieldState.value}
+                                            className="dark:bg-gray-800 dark:text-white w-full"
+                                            onChange={(e) => changeFormDataDebounced(id, e.target.value)}
+                                        >
+
+                                            {options.map((opt: any) => (
+                                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    ) : (
+                                        <OutlinedInput
+                                            id={id}
+                                            fullWidth
+                                            inputRef={refs[id]}
+                                            type={type === "password" && showPassword ? "text" : type}
+                                            placeholder={placeholder}
+                                            error={Boolean(fieldState.error)}
+                                            defaultValue={fieldState.value}
+                                            className="mt-1"
+                                            sx={{ borderRadius: "0.8rem", outline: 0 }}
+                                            onChange={(e) => changeFormDataDebounced(id, e.target.value)}
+                                            {...(type === "password"
+                                                ? {
+                                                    endAdornment: (
+                                                        <InputAdornment position="end">
+                                                            <IconButton
+                                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                                                onClick={handleClickShowPassword}
+                                                                onMouseDown={handleMouseDownPassword}
+                                                                className="rounded-2xl"
+                                                            >
+                                                                {!showPassword ? <VisibilityOff /> : <Visibility />}
+                                                            </IconButton>
+                                                        </InputAdornment>
+                                                    ),
+                                                }
+                                                : {})}
+                                        />
+                                    )}
+
                                     {fieldState.error && (
-                                        <span className="text-red-500">
-                                            {fieldState.error}
-                                        </span>
+                                        <span className="text-red-500">{fieldState.error}</span>
                                     )}
                                 </FormControl>
                             );
                         })}
                     </Box>
+
 
                     <section className="flex flex-col items-center justify-center">
                         <div>
