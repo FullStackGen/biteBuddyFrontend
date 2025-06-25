@@ -72,3 +72,34 @@ export const SignUpOrLoginFormData = [
   }
 ];
 
+export const addRestaurantFormData = [
+   {
+    id: "restaurantName",
+    label: "Restaurant Name",
+    type: "text",
+    placeholder: "Enter the restaurant name",
+    apiKey: "restaurantName"
+  },
+  {
+    id: "state",
+    label: "Restaurant State",
+    type: "text",
+    placeholder: "Enter the restaurant state",
+    apiKey: "state"
+  },
+  {
+    id: "location",
+    label: "Restaurant Location",
+    type: "text",
+    placeholder: "Enter the restaurant location",
+    apiKey: "location"
+  },
+  {
+    id: "cuisine",
+    label: "Cuisine",
+    type: "text",
+    placeholder: "Enter the cuisine",
+    apiKey: "cuisine"
+  },
+]
+

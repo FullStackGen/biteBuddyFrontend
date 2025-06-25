@@ -83,9 +83,19 @@ export function login(email: string, password: string) {
 export function fetchUserData(apiData:any) {
   return apiClient.get(`${API_ENDPONTS.FETCH_USER_DATA}/${apiData.userId}`, 
     {
-    headers: {  authorization: `${apiData.token}` }
+    headers: {  Authorization: `Bearer ${apiData.token}` }
   }
 );
+}
+
+
+export function addRestaurant(payload:any) {
+  let token = sessionStorage.getItem("authToken");
+  console.log("token in addRestaurant:", token);
+  
+  return apiClient.post(API_ENDPONTS.ADD_RESTAURANT, payload, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 }
 
 // …any other endpoints…

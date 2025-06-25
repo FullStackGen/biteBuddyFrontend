@@ -224,6 +224,7 @@ const Header: React.FC = () => {
                 apiResponse = await login(payload.email, payload.password);
                 if (apiResponse) {
                     userDataDispatcher(setUserData({ userDetails: apiResponse.data, isAuthenticated: true }));
+                    sessionStorage.setItem("authToken", apiResponse.data.token);
                 }
                 let userDetails = await fetchUserData(apiResponse.data);
                 console.log("userDetails", userDetails);
