@@ -3,25 +3,29 @@ export const dashboardComponentButtons = [
       id: "home",
       name: "Home",
       route: "/",
-      component: "Home"
+      component: "Home",
+      accessRights: ["ROLE_CUSTOMER", "ROLE_ADMIN"]
     },
     {
       id: "add-restaurant",
       name: "Add new Restaurant",
       route: "/add-restaurant",
-      component: "AddRestaurant"
+      component: "AddRestaurant",
+      accessRights: ["ROLE_CUSTOMER", "ROLE_ADMIN"]
     },
       {
       id: "restaurants",
       name: "Restaurant",
       route: "/restaurant",
-      component: "RestaurantDetails"
+      component: "RestaurantDetails",
+      accessRights: ["ROLE_CUSTOMER", "ROLE_ADMIN"]
     },
     {
       id: "orders",
       name: "Orders",
       route: "/orders",
-      component: "Orders"
+      component: "Orders",
+      accessRights: ["ROLE_CUSTOMER", "ROLE_ADMIN"]
     }
 ]
 
@@ -101,5 +105,49 @@ export const addRestaurantFormData = [
     placeholder: "Enter the cuisine",
     apiKey: "cuisine"
   },
+   {
+    id: "rating",
+    label: "Rating",
+    type: "number",
+    placeholder: "Enter the Rating(between 0 to 5)",
+    apiKey: "rating"
+  },
 ]
 
+export const addMenuFormData = [
+   {
+    id: "restaurantName",
+    label: "Restaurant Name",
+    type: "text",
+    placeholder: "Enter the restaurant name",
+    apiKey: "restaurantName"
+  },
+  {
+    id: "state",
+    label: "Restaurant State",
+    type: "text",
+    placeholder: "Enter the restaurant state",
+    apiKey: "state"
+  },
+  {
+    id: "location",
+    label: "Restaurant Location",
+    type: "text",
+    placeholder: "Enter the restaurant location",
+    apiKey: "location"
+  },
+  {
+    id: "cuisine",
+    label: "Cuisine",
+    type: "text",
+    placeholder: "Enter the cuisine",
+    apiKey: "cuisine"
+  },
+   {
+    id: "rating",
+    label: "Rating",
+    type: "number",
+    placeholder: "Enter the Rating(between 0 to 5)",
+    apiKey: "rating"
+  },
+]

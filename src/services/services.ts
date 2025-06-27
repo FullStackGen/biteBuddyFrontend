@@ -98,4 +98,22 @@ export function addRestaurant(payload:any) {
   });
 }
 
+export function modifyRestaurant(payload:any,restaurantId:string) {
+  let token = sessionStorage.getItem("authToken");
+  console.log("token in addRestaurant:", token);
+  
+  return apiClient.put(`${API_ENDPONTS.ADD_RESTAURANT}/${restaurantId}`, payload, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+
+export function searchRestaurantById(restaurantId: string) {
+  let token = sessionStorage.getItem("authToken");
+  console.log("token in addRestaurant:", token);
+  
+  return apiClient.get(`${API_ENDPONTS.ADD_RESTAURANT}/${restaurantId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
 // …any other endpoints…

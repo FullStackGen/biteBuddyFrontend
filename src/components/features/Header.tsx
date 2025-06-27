@@ -218,6 +218,7 @@ const Header: React.FC = () => {
 
         try {
             let apiResponse;
+            let userDetailsData;
             if (formType !== "Login") {
                 apiResponse = await signUp(payload);
             } else {
@@ -226,12 +227,15 @@ const Header: React.FC = () => {
                     userDataDispatcher(setUserData({ userDetails: apiResponse.data, isAuthenticated: true }));
                     sessionStorage.setItem("authToken", apiResponse.data.token);
                 }
-                let userDetails = await fetchUserData(apiResponse.data);
-                console.log("userDetails", userDetails);
-
+                let userDetailsData = await fetchUserData(apiResponse.data);
+                console.log("userDetails", userDetailsData.data);
+                userDataDispatcher(setUserData({ userDetails: userDetailsData.data, isAuthenticated: true }));
+                console.log("userData", userData);
             }
             if (apiResponse) {
+
                 console.log("API Response:", apiResponse.data);
+
             }
             closeDialog();
         } catch (error) {

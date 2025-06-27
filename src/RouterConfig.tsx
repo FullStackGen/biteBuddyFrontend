@@ -15,6 +15,7 @@ const componentMap: Record<string, React.ComponentType> = {
     RestaurantDetails,
     Orders,
     Help,
+    NotFound
 }
 
 export const router = createBrowserRouter([
